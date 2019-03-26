@@ -1,0 +1,113 @@
+@import "./var.sass";
+
+@mixin fontsize-autofix($value) {
+  font-size: $value;
+  @for $i from 1 to $--font-reduction {
+    $font-value: $value - $i * 2px;
+    $width-value: $--base-width*($font-value)/$value;
+    @include fontsize-media-query($width-value, $font-value);
+  }
+}
+
+@mixin rem-autofix($value) {
+  font-size: $value;
+  @for $i from 1 to $--font-reduction*2 {
+    $grad: 1 - 0.05 * $i;
+    $width-value: $--base-width*$grad;
+    $font-value: $value*$grad;
+    @include fontsize-media-query($width-value, $font-value);
+  }
+}
+
+@mixin fontsize-media-query($width,$value) {
+  @media (max-width: $width) {
+    font-size: $value;
+  }
+}
+
+@mixin autoflexitem{
+  display: flex;
+  justify-content: space-between;
+  flex-wrap:wrap;
+  align-content: space-between;
+}
+
+@mixin align-center-flex{
+  display: flex;
+  align-items: center;
+}
+
+@mixin column-flex{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+@mixin column-center-flex{
+  display: flex;
+  justify-content: center;
+}
+
+@mixin bg-contain($url){
+  background: $url center no-repeat;
+  background-size: contain;
+}
+
+@mixin bg-cover($url){
+  background: $url center no-repeat;
+  background-size: cover;
+}
+
+@mixin bg-max($url){
+  background: $url center no-repeat;
+  background-size: 100% 100%;
+}
+
+@mixin triangle($side, $size, $color){
+  width: 0;
+  height: 0;
+  @each $direction in left, right, top, bottom{
+    @if $direction != $side {
+      border-#{$direction}: $size solid transparent;
+    }
+  }
+  border-#{$side}: $size solid $color;
+  @each $item in (top, bottom){
+    @if $side == $item{
+      margin-#{$side}: $size;
+    }
+  }
+}
+
+@mixin dynamic-bg($folder, $time, $name, $num){
+  background-size: 100% 100%;
+  animation: #{$folder} $time 0s infinite normal none;
+  will-change: transform;
+  @at-root{
+    @keyframes #{$folder} {
+      @for $i from 0 to $num {
+        #{$i/$num*100}% {
+          $index: if($i<10, 0#{$i}, $i);
+          background-image: url('../images/dynamic_bg/#{$folder}/#{$name}#{$index}.png');
+        }
+      }
+      100% {
+        background-image: url('../images/dynamic_bg/#{$folder}/#{$name}00.png');
+      }
+    }
+  }
+}
+
+@mixin gradual-text($font-size, $top-color, $bottom-color){
+  @include fontsize-autofix($font-size);
+  background-image: -webkit-gradient(linear, 0 0, 0 bottom, from($top-color), to($bottom-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@mixin arrow($time){
+  &:hover{
+    transform: rotate(180deg);
+  }
+  // at-root:
+}
