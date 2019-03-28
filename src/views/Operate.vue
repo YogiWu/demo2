@@ -25,18 +25,34 @@
             @dragover="over = true"
             @dragleave="over = false"
             @drop="handleDrop">
+              <svg class="chart-area" ref="chart"></svg>
           </drop>
         </a-layout-content>
         <!-- <a-layout-footer>Footer</a-layout-footer> -->
       </a-layout>
       <a-layout-sider>Sider</a-layout-sider>
     </a-layout>
-    <svg class="chart-area" ref="chart"></svg>
   </div>
 </template>
 
 <script>
 import * as d3 from 'd3'
+
+import _ from 'lodash'
+
+// function changePosition () {
+//   // console.log(el)
+//   d3.select(this)
+//     .attr('cx', d3.event.x)
+//     .attr('cy', d3.event.y)
+// }
+
+function changePosition (el, event) {
+  // console.log(el)
+  d3.select(el)
+    .attr('cx', event.x)
+    .attr('cy', event.y)
+}
 
 export default {
   name: 'Operate',
@@ -49,7 +65,8 @@ export default {
           icon: '',
           text: 'test'
         }
-      ]
+      ],
+      changePosition: Function
     }
   },
   methods: {
@@ -63,16 +80,21 @@ export default {
 
       console.log(this.$refs.chart)
 
+      let temp = this.changePosition
+
       d3.select(this.$refs.chart).append('circle')
         .attr('fill', '#777')
         .attr('r', 15)
         .attr('cx', event.clientX)
         .attr('cy', event.clientY)
+        // .call(d3.drag().on('drag', changePosition))
+        .call(d3.drag().on('drag', function () { temp(this, d3.event) }))
     }
   },
   mounted () {
     this.$nextTick(() => {
       console.log(this.$refs)
+      this.changePosition = _.throttle(changePosition, 10)
     })
   }
 }
@@ -86,12 +108,13 @@ export default {
 .main-layout
   width: 100vw
   height: 100vh
-  background: rgba(0, 0, 0, 0)
-  .ant-layout
-    opacity: 0
+  // background: rgba(0, 0, 0, 0)
+  // .ant-layout
+  //   opacity: 0
 
 .sider
   @include dark-theme()
+  z-index: 2
 
 .element
   width: 40px
@@ -106,12 +129,13 @@ export default {
 .drop-area
   width: 100%
   height: 100%
+  overflow: hidden
 
 .chart-area
-  position: fixed
-  width: 100%
-  height: 100%
+  position: absolute
+  width: 100vw
+  height: 100vh
   top: 0
   left: 0
-  z-index: -1
+  // z-index: -1
 </style>
