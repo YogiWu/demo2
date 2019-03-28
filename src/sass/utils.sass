@@ -1,0 +1,32 @@
+@import "./var.sass"
+
+@mixin fontsize-autofix($value) 
+  font-size: $value
+  @for $i from 1 to $--font-reduction 
+    $font-value: $value - $i * 2px
+    $width-value: $--base-width*($font-value)/$value
+    @include fontsize-media-query($width-value, $font-value)
+
+@mixin rem-autofix($value) 
+  font-size: $value
+  @for $i from 1 to $--font-reduction*2 
+    $grad: 1 - 0.05 * $i
+    $width-value: $--base-width*$grad
+    $font-value: $value*$grad
+    @include fontsize-media-query($width-value, $font-value)
+
+@mixin fontsize-media-query($width,$value) 
+  @media (max-width: $width) 
+    font-size: $value
+
+@mixin bg-contain($url)
+  background: $url center no-repeat
+  background-size: contain
+
+@mixin bg-cover($url)
+  background: $url center no-repeat
+  background-size: cover
+
+@mixin bg-max($url)
+  background: $url center no-repeat
+  background-size: 100% 100%
