@@ -10,6 +10,12 @@ import 'normalize.css'
 
 import { Drag, Drop } from 'vue-drag-drop'
 
+import ClickOutside from 'vue-click-outside'
+
+// Vue.use(ClickOutside)
+
+Vue.directive('cos', ClickOutside)
+
 Vue.component('drag', Drag)
 Vue.component('drop', Drop)
 

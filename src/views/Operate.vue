@@ -6,7 +6,7 @@
           <a-collapse-panel header="分类1" key="1">
             <div class="element" v-for="(item, key) in eleList" :key="key">
               <drag class="drag"
-                :transfer-data="{ example: 'drop effects (copy)' }"
+                :transfer-data="item"
                 :effect-allowed="['copy']"
                 drop-effect="copy"
               >
@@ -25,7 +25,7 @@
             @dragover="over = true"
             @dragleave="over = false"
             @drop="handleDrop">
-              <svg class="chart-area" ref="chart"></svg>
+              <svg class="chart-area" ref="chart" v-cos="clickoutside" @click.prevent="clickoutside"></svg>
           </drop>
         </a-layout-content>
         <!-- <a-layout-footer>Footer</a-layout-footer> -->
@@ -38,21 +38,20 @@
 <script>
 import * as d3 from 'd3'
 
-import _ from 'lodash'
+import * as Rx from 'rx-lite'
 
-// function changePosition () {
-//   // console.log(el)
-//   d3.select(this)
-//     .attr('cx', d3.event.x)
-//     .attr('cy', d3.event.y)
-// }
+function changePosition (el) {
+  // console.log(1111)
 
-function changePosition (el, event) {
-  // console.log(el)
   d3.select(el)
-    .attr('cx', event.x)
-    .attr('cy', event.y)
+    .attr('transform', `translate(${event.clientX}, ${event.clientY})`)
+    // .attr('cx', d3.event.x)
+    // .attr('cy', d3.event.y)
 }
+
+let subject = new Rx.Subject()
+subject.throttle(15)
+  .subscribe(changePosition)
 
 export default {
   name: 'Operate',
@@ -66,36 +65,70 @@ export default {
           text: 'test'
         }
       ],
-      changePosition: Function
+      subject: null,
+      activeNode: null
     }
   },
   methods: {
+    clickoutside () {
+      // console.log(1111)
+      d3.select(this.$refs.chart).selectAll('g')
+        .classed('active', false)
+    },
     handleDrop (data, event) {
       this.over = false
-      console.log(event)
-      // alert(`You dropped with data: ${JSON.stringify(data)}`)
 
-      // const width = this.$refs.dropArea.$el.offsetWidth
-      // const height = this.$refs.dropArea.$el.offsetHeight
+      // let toggle =
+      //   (function () {
+      //     let active = false
+      //     return function () {
+      //       active = !active
+      //       return active
+      //     }
+      //   })()
 
-      console.log(this.$refs.chart)
+      let group = d3.select(this.$refs.chart)
+        .append('g')
+        .attr('transform', `translate(${event.clientX}, ${event.clientY})`)
+        // .attr('cx', event.clientX)
+        // .attr('cy', event.clientY)
+        // .classed('active', true)
+        .call(d3.drag().on('drag', function () { subject.onNext(this) }))
+        .on('click', (...[,, el]) => {
+          // this.clickoutside
+          el = el[0]
+          this.clickoutside()
+          // d3.selectAll('g').classed('active', false)
+          if (this.activeNode === el) {
+            d3.select(el).classed('active', false)
+            this.activeNode = null
+          } else {
+            d3.select(el).classed('active', true)
+            this.activeNode = el
+          }
 
-      let temp = this.changePosition
+          d3.event.stopPropagation()
+        })
 
-      d3.select(this.$refs.chart).append('circle')
+      group.append('circle')
         .attr('fill', '#777')
         .attr('r', 15)
-        .attr('cx', event.clientX)
-        .attr('cy', event.clientY)
         // .call(d3.drag().on('drag', changePosition))
-        .call(d3.drag().on('drag', function () { temp(this, d3.event) }))
+
+      group.append('text')
+        .text(data.text)
+        .attr('y', 30)
     }
   },
   mounted () {
-    this.$nextTick(() => {
-      console.log(this.$refs)
-      this.changePosition = _.throttle(changePosition, 10)
+    document.addEventListener('keyup', e => {
+      if (e.keyCode === 46 && this.activeNode) {
+        d3.select(this.activeNode).remove()
+      }
     })
+  },
+  destroyed () {
+    document.removeEventListener('keyup')
   }
 }
 </script>
@@ -118,6 +151,8 @@ export default {
 
 .element
   width: 40px
+  // background: rgba(0, 0, 0, 0)
+  cursor: pointer
   .icon
     height: 40px
     width: 40px
@@ -138,4 +173,16 @@ export default {
   top: 0
   left: 0
   // z-index: -1
+</style>
+
+<style lang="sass">
+text
+  text-anchor: middle
+  dominant-baseline: middle
+
+g
+  cursor: pointer
+  &.active
+    circle
+      fill: red
 </style>
