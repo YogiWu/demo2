@@ -36,8 +36,7 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 - [X] 给元素添加上文字
 - [X] 单击选中元素
 - [X] 按住delete删除元素
+- [] 给画布添加拖动，缩放效果
 - [] 添加右键菜单
 - [] 给元素连线
-- [] 给画布添加拖动，缩放效果
-- [] 右键菜单
 - [] 添加元素避开重叠

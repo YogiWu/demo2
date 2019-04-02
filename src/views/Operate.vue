@@ -25,7 +25,23 @@
             @dragover="over = true"
             @dragleave="over = false"
             @drop="handleDrop">
-              <svg class="chart-area" ref="chart" v-cos="clickoutside" @click.prevent="clickoutside"></svg>
+            <a-dropdown
+              :trigger="['contextmenu']">
+              <svg class="chart-area"
+                ref="chart"
+                v-cos="clickoutside"
+                @click.prevent="clickoutside"
+                @contextmenu="contextoutside"
+                ></svg>
+              <a-menu
+                v-show="activeNode"
+                slot="overlay">
+                <a-menu-item
+                  v-for="(item, index) in contextmenuList" :key="index"
+                  @click.capture="item.handle(item, $event)"
+                >{{item.text}}</a-menu-item>
+              </a-menu>
+            </a-dropdown>
           </drop>
         </a-layout-content>
         <!-- <a-layout-footer>Footer</a-layout-footer> -->
@@ -62,7 +78,17 @@ export default {
         {
           type: 'test',
           icon: '',
-          text: 'test'
+          text: 'test',
+          contextmenu: [{
+            text: '删除',
+            handle: (el) => {
+              // console.log(...arguments)
+              console.log(this.activeNode)
+
+              d3.select(this.activeNode).remove()
+              this.activeNode = null
+            }
+          }]
         }
       ],
       subject: null,
@@ -70,10 +96,18 @@ export default {
     }
   },
   methods: {
+    log () {
+      console.log(arguments)
+    },
+    contextoutside (e) {
+      if (e.target === this.$refs.chart) this.clickoutside()
+    },
     clickoutside () {
       // console.log(1111)
       d3.select(this.$refs.chart).selectAll('g')
         .classed('active', false)
+
+      this.activeNode = null
     },
     handleDrop (data, event) {
       this.over = false
@@ -90,6 +124,7 @@ export default {
       let group = d3.select(this.$refs.chart)
         .append('g')
         .attr('transform', `translate(${event.clientX}, ${event.clientY})`)
+        .property('contextmenu', data.contextmenu)
         // .attr('cx', event.clientX)
         // .attr('cy', event.clientY)
         // .classed('active', true)
@@ -97,17 +132,14 @@ export default {
         .on('click', (...[,, el]) => {
           // this.clickoutside
           el = el[0]
-          this.clickoutside()
-          // d3.selectAll('g').classed('active', false)
-          if (this.activeNode === el) {
-            d3.select(el).classed('active', false)
-            this.activeNode = null
-          } else {
-            d3.select(el).classed('active', true)
-            this.activeNode = el
-          }
-
+          // console.log(el.contextmenu)
+          this.selectNode(el)
           d3.event.stopPropagation()
+        }).on('contextmenu', (...[,, el]) => {
+          console.log(d3.event)
+          el = el[0]
+          this.selectNode(el, false)
+          // d3.event.preventDefault()
         })
 
       group.append('circle')
@@ -118,17 +150,37 @@ export default {
       group.append('text')
         .text(data.text)
         .attr('y', 30)
+    },
+    selectNode (el, isToggle = true) {
+      // this.clickoutside()
+      d3.selectAll('g').classed('active', false)
+
+      if (this.activeNode === el && isToggle) {
+        d3.select(el).classed('active', false)
+        this.activeNode = null
+      } else {
+        d3.select(el).classed('active', true)
+        this.activeNode = el
+      }
+    },
+    deleteListener (e) {
+      if (e.keyCode === 46 && this.activeNode) {
+        d3.select(this.activeNode).remove()
+        this.activeNode = null
+      }
+    }
+  },
+  computed: {
+    contextmenuList () {
+      if (!this.activeNode) return []
+      else return this.activeNode.contextmenu
     }
   },
   mounted () {
-    document.addEventListener('keyup', e => {
-      if (e.keyCode === 46 && this.activeNode) {
-        d3.select(this.activeNode).remove()
-      }
-    })
+    document.addEventListener('keyup', this.deleteListener)
   },
   destroyed () {
-    document.removeEventListener('keyup')
+    document.removeEventListener('keyup', this.deleteListener)
   }
 }
 </script>
@@ -179,6 +231,7 @@ export default {
 text
   text-anchor: middle
   dominant-baseline: middle
+  user-select: none
 
 g
   cursor: pointer

@@ -1,6 +1,14 @@
 <template>
   <div class="test">
+    <a-dropdown :trigger="['contextmenu']">
     <svg></svg>
+    <!-- <span style="user-select: none">Right Click on Me</span> -->
+    <a-menu slot="overlay">
+      <a-menu-item key="1">1st menu item</a-menu-item>
+      <a-menu-item key="2">2nd menu item</a-menu-item>
+      <a-menu-item key="3">3rd menu item</a-menu-item>
+    </a-menu>
+  </a-dropdown>
   </div>
 </template>
 
