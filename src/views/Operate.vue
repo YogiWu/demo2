@@ -26,6 +26,7 @@
             @dragleave="over = false"
             @drop="handleDrop">
             <a-dropdown
+              v-model="showContextMenu"
               :trigger="['contextmenu']">
               <svg class="chart-area"
                 ref="chart"
@@ -60,10 +61,13 @@ function changePosition (el) {
   // console.log(1111)
 
   d3.select(el)
-    .attr('transform', `translate(${event.clientX}, ${event.clientY})`)
+    .attr('transform', `translate(${event.x - containerX}, ${event.y - containerY})`)
     // .attr('cx', d3.event.x)
     // .attr('cy', d3.event.y)
 }
+
+let containerX = 0
+let containerY = 0
 
 let subject = new Rx.Subject()
 subject.throttle(15)
@@ -73,6 +77,7 @@ export default {
   name: 'Operate',
   data () {
     return {
+      showContextMenu: false,
       over: false,
       eleList: [
         {
@@ -92,7 +97,10 @@ export default {
         }
       ],
       subject: null,
-      activeNode: null
+      activeNode: null,
+      container: null,
+      containerX: 0,
+      containerY: 0
     }
   },
   methods: {
@@ -121,9 +129,11 @@ export default {
       //     }
       //   })()
 
-      let group = d3.select(this.$refs.chart)
+      console.log(this.container.attr('cx'))
+
+      let group = this.container
         .append('g')
-        .attr('transform', `translate(${event.clientX}, ${event.clientY})`)
+        .attr('transform', `translate(${event.x - containerX}, ${event.y - containerY})`)
         .property('contextmenu', data.contextmenu)
         // .attr('cx', event.clientX)
         // .attr('cy', event.clientY)
@@ -177,6 +187,17 @@ export default {
     }
   },
   mounted () {
+    this.container = d3.select(this.$refs.chart)
+      .append('g')
+
+    d3.select(this.$refs.chart).call(d3.zoom().on('zoom', () => { // 放大
+      if (this.showContextMenu) return
+
+      this.container.attr('transform', d3.event.transform)
+      containerX = d3.event.transform.x
+      containerY = d3.event.transform.y
+    }))
+
     document.addEventListener('keyup', this.deleteListener)
   },
   destroyed () {
